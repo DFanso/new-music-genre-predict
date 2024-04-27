@@ -22,6 +22,12 @@ mongoose.set('debug', (collectionName, methodName, ...methodArgs) => {
       isGlobal: true,
       validationSchema: Joi.object({
         MONGO_URI: Joi.string().required(),
+        SPOTIFY_CLIENT_SECRET: Joi.string().required(),
+        SPOTIFY_CLIENT_ID: Joi.string().required(),
+        PLAYLIST_ID: Joi.string().required(),
+        SPOTIFY_API_URL: Joi.string().required(),
+        RAPID_API_KEY: Joi.string().required(),
+        GENRE_API: Joi.string().required(),
       }),
     }),
     MongooseModule.forRoot(

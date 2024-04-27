@@ -1,26 +1,25 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateNewSongDto } from './dto/create-new-song.dto';
-import { UpdateNewSongDto } from './dto/update-new-song.dto';
+import { NewSong, NewSongDocument } from './entities/new-song.entity';
 
 @Injectable()
-export class NewSongsService {
-  create(createNewSongDto: CreateNewSongDto) {
-    return 'This action adds a new newSong';
+export class SongStorageService {
+  constructor(
+    @InjectModel(NewSong.name) private newSongModel: Model<NewSongDocument>,
+  ) {}
+
+  async saveSongs(createNewSongDto: CreateNewSongDto): Promise<NewSong> {
+    const createdNewSong = new this.newSongModel({
+      songs: createNewSongDto.songs,
+      date: createNewSongDto.date,
+    });
+
+    return createdNewSong.save();
   }
 
-  findAll() {
-    return `This action returns all newSongs`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} newSong`;
-  }
-
-  update(id: number, updateNewSongDto: UpdateNewSongDto) {
-    return `This action updates a #${id} newSong`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} newSong`;
+  async getLatestSongs(): Promise<NewSong> {
+    return this.newSongModel.findOne().sort({ date: -1 }).exec();
   }
 }
