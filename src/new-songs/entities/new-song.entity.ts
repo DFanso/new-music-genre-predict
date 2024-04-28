@@ -3,6 +3,7 @@ import { Document } from 'mongoose';
 
 export type NewSongDocument = NewSong & Document;
 
+@Schema()
 class Song {
   @Prop({ required: true })
   name: string;
@@ -15,6 +16,15 @@ class Song {
 
   @Prop()
   genre?: string;
+
+  @Prop()
+  artistName?: string;
+
+  @Prop()
+  coverImage?: string;
+
+  @Prop()
+  spotifyLink?: string;
 }
 
 @Schema()
