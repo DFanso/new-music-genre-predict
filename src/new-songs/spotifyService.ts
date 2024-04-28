@@ -51,15 +51,17 @@ export class SpotifyService {
 
   async getNewReleasedSongs(): Promise<CreateNewSongDto> {
     const playlistId = this.configService.get<string>('PLAYLIST_ID');
-    const limit = 10; // Change this to the desired number of songs
+    const limit = 5; // Change this to the desired number of songs
     const accessToken = await this.getAccessToken();
+
     const { data } = await lastValueFrom(
       this.httpService.get(
         `${this.spotifyApiUrl}/playlists/${playlistId}/tracks`,
         {
           params: {
             limit,
-            fields: 'items(track(name))',
+            fields:
+              'items(track(name,album(artists.name,images),external_urls.spotify))',
           },
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -67,31 +69,37 @@ export class SpotifyService {
         },
       ),
     );
-    const songNames = data.items.map((item) => item.track.name);
-    const songsWithM4aLink = await Promise.all(
-      songNames.map(async (name) => {
+
+    const songs = await Promise.all(
+      data.items.map(async (item) => {
+        const name = item.track.name;
+        const artistName = item.track.album.artists[0].name;
+        const coverImage = item.track.album.images[0].url;
+        const spotifyLink = item.track.external_urls.spotify;
         const m4aLink = await this.ytService.getM4aLink(name);
-        return { name, ytLink: m4aLink };
-      }),
-    );
-    const songsWithWavFilePath = await Promise.all(
-      songsWithM4aLink.map(async (song) => {
         const wavFilePath = await this.downloadService.downloadAndConvertToWav(
-          song.name,
-          song.ytLink,
+          name,
+          m4aLink,
         );
-        return { ...song, wavFilePath };
+        return {
+          name,
+          ytLink: m4aLink,
+          wavFilePath,
+          artistName,
+          coverImage,
+          spotifyLink,
+        };
       }),
     );
+
     const newSongDto: CreateNewSongDto = {
-      songs: songsWithWavFilePath,
+      songs,
       date: new Date(),
     };
 
     // Get the predicted genres for the songs
     const songsWithGenre =
       await this.genreService.getGenresForSongs(newSongDto);
-
     return await this.songService.saveSongs(songsWithGenre);
   }
 }
